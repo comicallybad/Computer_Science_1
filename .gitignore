@@ -1,0 +1,10 @@
+.vscode
+./login.bat
+/**/*.out
+/**/*.exe
+/**/*.rar
+/**/*.zip
+/**/*.jpg
+/**.*.png
+/**/*.txt
+/**/*.bin
