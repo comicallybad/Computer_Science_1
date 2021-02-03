@@ -55,7 +55,6 @@ monster **readMonsters(FILE *infile, int *monsterCount)
     {
         fscanf(infile, "%s %s %d", name, element, &population);
         monsterList[i] = createMonster(name, element, population);
-        printf("%s %s %d\n", monsterList[i]->name, monsterList[i]->element, monsterList[i]->population);
     }
     return monsterList;
 }
@@ -69,8 +68,6 @@ region *createRegion(FILE *infile, char *name, int nmonsters, int monsterCount, 
     region->monsters = malloc(nmonsters * sizeof(monster));
     region->nmonsters = nmonsters;
 
-    printf("%s\n", region->name);
-    printf("%d monsters\n", nmonsters);
     int totalPop = 0;
     for (int i = 0; i < nmonsters; i++)
     {
@@ -81,7 +78,6 @@ region *createRegion(FILE *infile, char *name, int nmonsters, int monsterCount, 
             {
                 region->monsters[i] = monsters[j];
                 totalPop += monsters[j]->population;
-                printf("%s\n", region->monsters[i]->name);
             }
         }
     }
@@ -104,8 +100,6 @@ region **readRegions(FILE *infile, int *countRegions, monster **monsterList, int
         fscanf(infile, "%d %s", &mcount, temp);
 
         regionList[i] = createRegion(infile, name, mcount, monsterCount, monsterList);
-
-        printf("\n\n");
     }
 
     return regionList;
@@ -136,10 +130,6 @@ trainer *readTrainers(FILE *infile, int *trainerCount, region **regionList, int 
 
         trainerList[i].visits->regions = malloc(regions * sizeof(region));
 
-        printf("%s\n", trainerList[i].name);
-        printf("%d captures\n", trainerList[i].visits->captures);
-        printf("%d regions\n", regions);
-
         for (int j = 0; j < regions; j++)
         {
             fscanf(infile, "%s", regionName);
@@ -148,11 +138,9 @@ trainer *readTrainers(FILE *infile, int *trainerCount, region **regionList, int 
                 if (strcmp(regionList[k]->name, regionName) == 0)
                 {
                     trainerList[i].visits->regions[j] = regionList[k];
-                    printf("%s\n", trainerList[i].visits->regions[j]->name);
                 }
             }
         }
-        printf("\n");
     }
     return trainerList;
 }
@@ -162,10 +150,12 @@ void process_inputs(FILE *ofp, monster **monsterList, int monsterCount, region *
     for (int i = 0; i < trainerCount; i++)
     {
         fprintf(ofp, "%s\n", trainerList[i].name);
+        printf("%s\n", trainerList[i].name);
         for (int j = 0; j < trainerList[i].visits->nregions; j++)
         {
             int mPopulation;
             fprintf(ofp, "%s\n", trainerList[i].visits->regions[j]->name);
+            printf("%s\n", trainerList[i].visits->regions[j]->name);
             for (int k = 0; k < trainerList[i].visits->regions[j]->nmonsters; k++)
             {
                 int tPopulation = trainerList[i].visits->regions[j]->monsters[k]->population;
@@ -176,13 +166,16 @@ void process_inputs(FILE *ofp, monster **monsterList, int monsterCount, region *
                 if (caught != 0)
                 {
                     fprintf(ofp, "%d %s\n", caught, trainerList[i].visits->regions[j]->monsters[k]->name);
+                    printf("%d %s\n", caught, trainerList[i].visits->regions[j]->monsters[k]->name);
                 }
-                printf("%d %d %f\n", tPopulation, trainerList[i].visits->regions[j]->total_population, mcount);
             }
             mPopulation = 0;
         }
         if (i < trainerCount - 1)
+        {
             fprintf(ofp, "\n");
+            printf("\n");
+        }
     }
 }
 
@@ -231,19 +224,13 @@ int main(void)
 
         fscanf(inFile, "%d %s", &monsterCount, temp);
 
-        printf("%d Monsters\n", monsterCount);
-
         monster **monsterList = readMonsters(inFile, &monsterCount);
 
         fscanf(inFile, "%d %s", &regionCount, temp);
 
-        printf("\n%d Regions\n\n", regionCount);
-
         region **regionList = readRegions(inFile, &regionCount, monsterList, monsterCount);
 
         fscanf(inFile, "%d %s", &trainerCount, temp);
-
-        printf("%d Trainers\n", trainerCount);
 
         trainer *trainerList = readTrainers(inFile, &trainerCount, regionList, regionCount);
 
