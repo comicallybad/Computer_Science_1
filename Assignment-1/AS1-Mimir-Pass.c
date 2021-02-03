@@ -32,6 +32,7 @@ typedef struct trainer
     itinerary *visits;
 } trainer;
 
+//Create a monster and assign its name, element, and population
 monster *createMonster(char *name, char *element, int population)
 {
     monster *monster = malloc(sizeof(monster));
@@ -44,6 +45,7 @@ monster *createMonster(char *name, char *element, int population)
     return monster;
 }
 
+//Create an array of monsters by calling createMonster for each one
 monster **readMonsters(FILE *infile, int *monsterCount)
 {
     char name[50];
@@ -59,6 +61,7 @@ monster **readMonsters(FILE *infile, int *monsterCount)
     return monsterList;
 }
 
+//Create a region and assign it's name, nmonsters, associated monsters and total_population
 region *createRegion(FILE *infile, char *name, int nmonsters, int monsterCount, monster **monsters)
 {
     char monsterName[50];
@@ -87,6 +90,7 @@ region *createRegion(FILE *infile, char *name, int nmonsters, int monsterCount, 
     return region;
 }
 
+//Create an array of regions by calling createRegion for each one
 region **readRegions(FILE *infile, int *countRegions, monster **monsterList, int monsterCount)
 {
     char temp[50];
@@ -105,6 +109,7 @@ region **readRegions(FILE *infile, int *countRegions, monster **monsterList, int
     return regionList;
 }
 
+//Create array of trainers and assign their name, captures, and regions
 trainer *readTrainers(FILE *infile, int *trainerCount, region **regionList, int countRegions)
 {
     char temp[50];
@@ -145,6 +150,7 @@ trainer *readTrainers(FILE *infile, int *trainerCount, region **regionList, int 
     return trainerList;
 }
 
+//Using the itinerary, this searches through, and calculates the amount of monsters a trainer will catch in each region
 void process_inputs(FILE *ofp, monster **monsterList, int monsterCount, region **regionList, int regionCount, trainer *trainerList, int trainerCount)
 {
     for (int i = 0; i < trainerCount; i++)
@@ -179,6 +185,7 @@ void process_inputs(FILE *ofp, monster **monsterList, int monsterCount, region *
     }
 }
 
+//Release all memory that has been allocated throughout the program and for structures
 void release_memory(monster **monsterList, int monsterCount, region **regionList, int regionCount, trainer *trainerList, int trainerCount)
 {
     for (int i = 0; i < monsterCount; i++)
@@ -208,6 +215,7 @@ void release_memory(monster **monsterList, int monsterCount, region **regionList
     free(trainerList);
 }
 
+//Main function, start by scanning in monster count, region count, trainer count, then process inputs, release mem and write data
 int main(void)
 {
     atexit(report_mem_leak); //for memory leak detector.
