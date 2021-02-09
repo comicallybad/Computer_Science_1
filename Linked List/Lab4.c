@@ -43,15 +43,9 @@ void display(node *t)
 
 node *reverse(node *head)
 {
-    // no need to reverse if head is null
-    // or there is only 1 node.
     if (head == NULL || head->next == NULL)
-    {
         return head;
-    }
-
     node *main_list = head->next;
-
     node *reversed_list = head;
     reversed_list->next = NULL;
 
@@ -59,35 +53,27 @@ node *reverse(node *head)
     {
         node *temp = main_list;
         main_list = main_list->next;
-
         temp->next = reversed_list;
         reversed_list = temp;
     }
-
     return reversed_list;
 }
 
 void insertToPlace(node *list, int val, int place)
 {
-
     if (list == NULL || place <= 0)
     {
         printf("\nList is empty or place is not valid");
         return;
     }
-
-    // Make the new node.
     node *tmp = malloc(sizeof(node));
     tmp->data = val;
-    // Iterate to the spot BEFORE place, the NULL check
-    // ensures we don�t go off the list if place is too high.
     int cnt = 1;
-    while (list->next != NULL && cnt < place - 1) //stop before the place
+    while (list->next != NULL && cnt < place - 1)
     {
         list = list->next;
         cnt++;
     }
-    // Patch in the node.
     tmp->next = list->next;
     list->next = tmp;
 }
