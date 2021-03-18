@@ -1,3 +1,6 @@
+/* COP 3502C Programming Assignment 3
+This program is written by: John Seredick */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -6,6 +9,7 @@
 int myX;
 int myY;
 
+//Create struct for our coordinates
 typedef struct coords
 {
     int x;
@@ -14,7 +18,7 @@ typedef struct coords
 
 void ReadData(coords **monsterCoords, coords **searchCoords, int *n, int *s, int *t);
 int compareTo(coords *ptrPt1, coords *ptrPt2);
-void insertionSort(coords arr[], int n); //Best case is: O(n), Avg: O(n^2), Worst : O(n^2)
+void insertionSort(coords arr[], int l, int r); //Best case is: O(n), Avg: O(n^2), Worst : O(n^2)
 void merge(coords arr[], int l, int m, int r);
 void mergeSort(coords arr[], int l, int r, int t); //Best case is: O(nlogn), Avg: O(nlogn), Worst : O(nlogn)
 void free_memory(coords arr[], coords arr2[]);
@@ -22,6 +26,7 @@ void sort(coords arr[], int n, int t);
 void search(coords arr[], coords search[], int n, int s, FILE *ofp);
 int binarySearch(coords arr[], int l, int r, coords search);
 
+//create monsterCoords array and searchCoords array, read data
 int main(void)
 {
     atexit(report_mem_leak);
@@ -30,33 +35,40 @@ int main(void)
     coords *monsterCoords, *searchCoords;
     int n, s, t;
 
+    //Read in data, n, s, t and points
     ReadData(&monsterCoords, &searchCoords, &n, &s, &t);
 
-    mergeSort(monsterCoords, 0, n - 1, t);
-    // insertionSort(monsterCoords, n);
+    //Sort the monsters by distance
+    sort(monsterCoords, n, t);
 
+    //Just printing out the sorted array
     for (int i = 0; i < n; i++)
     {
         printf("%d %d\n", monsterCoords[i].x, monsterCoords[i].y);
         fprintf(ofp, "%d %d\n", monsterCoords[i].x, monsterCoords[i].y);
     }
 
+    //Binary search for the monsters in searchCoords
     search(monsterCoords, searchCoords, n, s, ofp);
 
+    //Free memory from allocated array lengths
     free_memory(monsterCoords, searchCoords);
 
     return 0;
 }
 
+//Read n, s, t and all the points and all the search points
 void ReadData(coords **monsterCoords, coords **searchCoords, int *n, int *s, int *t)
 {
     FILE *ifp = fopen("in.txt", "r");
 
     fscanf(ifp, "%d %d %d %d %d", &myX, &myY, n, s, t);
 
+    //Allocate memory for coord struct array for monsterCoords and searchCoords
     *monsterCoords = malloc(sizeof(coords) * (*n));
     *searchCoords = malloc(sizeof(coords) * (*s));
 
+    //Scan in the values
     for (int i = 0; i < (*n); i++)
         fscanf(ifp, "%d %d", &(*monsterCoords)[i].x, &(*monsterCoords)[i].y);
 
@@ -66,20 +78,29 @@ void ReadData(coords **monsterCoords, coords **searchCoords, int *n, int *s, int
     fclose(ifp);
 }
 
+//Free our arrays we malloc
 void free_memory(coords arr[], coords arr2[])
 {
     free(arr);
     free(arr2);
 }
 
+//Sort the arrays, if array length is < t, use insertion sort otherwise use merge sort
 void sort(coords arr[], int n, int t)
 {
+    if (n < t)
+        insertionSort(arr, 0, n);
+    else
+        mergeSort(arr, 0, n - 1, t);
 }
 
+//Search that uses binary search to find points
 void search(coords arr[], coords search[], int n, int s, FILE *ofp)
 {
+    //Loop through all search points
     for (int i = 0; i < s; i++)
     {
+        //Locate the points with binarySearch, if -1, not found
         int location = binarySearch(arr, 0, n - 1, search[i]);
         if (location < 0)
         {
@@ -94,6 +115,7 @@ void search(coords arr[], coords search[], int n, int s, FILE *ofp)
     }
 }
 
+//Compare the distance between 2 struct pointers
 int compareTo(coords *ptrPt1, coords *ptrPt2)
 {
     int distanceOne = sqrt(pow((ptrPt1->x - myX), 2) + pow((ptrPt1->y - myY), 2));
@@ -121,11 +143,12 @@ int compareTo(coords *ptrPt1, coords *ptrPt2)
         return 1;
 }
 
-void insertionSort(coords arr[], int n)
+//Insertion sort modified so merge sort can use it for it's sub arrays
+void insertionSort(coords arr[], int l, int r)
 {
     coords item;
     int j;
-    for (int i = 1; i < n; i++)
+    for (int i = l; i < r; i++)
     {
         item = arr[i];
         /* Move elements of arr[0..i-1], that are
@@ -205,7 +228,7 @@ void merge(coords arr[], int l, int m, int r)
    sub-array of arr to be sorted */
 void mergeSort(coords arr[], int l, int r, int t)
 {
-    if (l < t)
+    if (l < r - t)
     {
         // get the mid point
         int m = (l + r) / 2;
@@ -216,6 +239,9 @@ void mergeSort(coords arr[], int l, int r, int t)
 
         merge(arr, l, m, r);
     }
+    int mid = (l + r) / 2;
+    insertionSort(arr, l, mid);
+    insertionSort(arr, mid + 1, r);
 }
 
 // A recursive binary search function. It returns
