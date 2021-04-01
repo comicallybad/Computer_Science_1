@@ -95,7 +95,7 @@ treeNameNode *buildNameTree(FILE *inFile, int N)
 
     treeNameNode *nameRoot = NULL;
     char name[MAXLEN];
-    for (int x = 0; x < N; x++)
+    for (int i = 0; i < N; i++)
     {
         fscanf(inFile, "%s", name);
         treeNameNode *newNameNode = createTreeNameNode(name);
@@ -127,7 +127,7 @@ void populateTrees(FILE *inFile, treeNameNode *nameRoot, int I)
         int count;
         char treeName[MAXLEN];
         char itemName[MAXLEN];
-        for (int x = 0; x < I; x++)
+        for (int i = 0; i < I; i++)
         {
             fscanf(inFile, "%s %s %d", treeName, itemName, &count);
             itemNode *newItemNode = createItemNode(itemName, count);
@@ -137,34 +137,37 @@ void populateTrees(FILE *inFile, treeNameNode *nameRoot, int I)
     }
 }
 
-void displayInOrderNameTree(treeNameNode *root)
+void displayInOrderNameTree(treeNameNode *root, FILE *ofp)
 {
     if (root != NULL)
     {
-        displayInOrderNameTree(root->left);
+        displayInOrderNameTree(root->left, ofp);
         printf("%s ", root->treeName);
-        displayInOrderNameTree(root->right);
+        fprintf(ofp, "%s ", root->treeName);
+        displayInOrderNameTree(root->right, ofp);
     }
 }
 
-void traverseSubTree(itemNode *root)
+void traverseSubTree(itemNode *root, FILE *ofp)
 {
     if (root != NULL)
     {
-        traverseSubTree(root->left);
+        traverseSubTree(root->left, ofp);
         printf("%s ", root->name);
-        traverseSubTree(root->right);
+        fprintf(ofp, "%s ", root->name);
+        traverseSubTree(root->right, ofp);
     }
 }
 
-void traverse_in_traverse(treeNameNode *root)
+void traverse_in_traverse(treeNameNode *root, FILE *ofp)
 {
     if (root != NULL)
     {
-        traverse_in_traverse(root->left);
+        traverse_in_traverse(root->left, ofp);
         printf("\n===%s===\n", root->treeName);
-        traverseSubTree(root->theTree);
-        traverse_in_traverse(root->right);
+        fprintf(ofp, "\n===%s===\n", root->treeName);
+        traverseSubTree(root->theTree, ofp);
+        traverse_in_traverse(root->right, ofp);
     }
 }
 
@@ -191,6 +194,53 @@ void freeAll(treeNameNode *root)
     }
 }
 
+int searchTree(itemNode *root, char nodeName[])
+{
+    if (root == NULL)
+        return 0;
+    if (strcmp(root->name, nodeName) == 0)
+        return root->count;
+    else if (strcmp(root->name, nodeName) > 0)
+        return searchTree(root->left, nodeName);
+    else
+        return searchTree(root->right, nodeName);
+}
+
+void search(treeNameNode *root, char treeName[], char nodeName[], FILE *ofp)
+{
+    treeNameNode *tree = searchNameNode(root, treeName);
+    int found = searchTree(tree->theTree, nodeName);
+    if (found == 0)
+    {
+        printf("\n%s not found in %s", nodeName, treeName);
+        fprintf(ofp, "\n%s not found in %s", nodeName, treeName);
+    }
+    else
+    {
+        printf("\n%d %s found in %s", found, nodeName, treeName);
+        fprintf(ofp, "\n%d %s found in %s", found, nodeName, treeName);
+    }
+}
+
+void queries(treeNameNode *root, FILE *inFile, FILE *ofp, int Q)
+{
+    char querie[MAXLEN];
+    char treeName[MAXLEN];
+    char nodeName[MAXLEN];
+    int count;
+
+    fscanf(inFile, "%s", querie);
+
+    if (strcmp(querie, "search") == 0 || strcmp(querie, "item_before") == 0 || strcmp(querie, "delete") == 0)
+        fscanf(inFile, "%s %s", treeName, nodeName);
+    else if (strcmp(querie, "height_balance") == 0 || strcmp(querie, "count") == 0 || strcmp(querie, "delete_name") == 0)
+        fscanf(inFile, "%s", treeName);
+    else if (strcmp(querie, "reduce") == 0)
+        fscanf(inFile, "%s %s %d", treeName, nodeName, &count);
+
+    search(root, treeName, nodeName, ofp);
+}
+
 int main(void)
 {
     atexit(report_mem_leak);
@@ -201,8 +251,10 @@ int main(void)
     fscanf(inFile, "%d %d %d", &N, &I, &Q);
     treeNameNode *nameRoot = buildNameTree(inFile, N);
     populateTrees(inFile, nameRoot, I);
-    displayInOrderNameTree(nameRoot);
-    traverse_in_traverse(nameRoot);
+    displayInOrderNameTree(nameRoot, ofp);
+    traverse_in_traverse(nameRoot, ofp);
+
+    queries(nameRoot, inFile, ofp, Q);
 
     freeAll(nameRoot);
     fclose(inFile);
