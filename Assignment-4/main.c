@@ -171,25 +171,25 @@ void traverse_in_traverse(treeNameNode *root, FILE *ofp)
     }
 }
 
-void freeTree(itemNode *root)
+void freeNode(itemNode *root)
 {
     if (root != NULL)
     {
         free(root->name);
-        freeTree(root->left);
-        freeTree(root->right);
+        freeNode(root->left);
+        freeNode(root->right);
         free(root);
     }
 }
 
-void freeAll(treeNameNode *root)
+void freeTree(treeNameNode *root)
 {
     if (root != NULL)
     {
         free(root->treeName);
-        freeAll(root->left);
-        freeAll(root->right);
-        freeTree(root->theTree);
+        freeTree(root->left);
+        freeTree(root->right);
+        freeNode(root->theTree);
         free(root);
     }
 }
@@ -206,39 +206,340 @@ int searchTree(itemNode *root, char nodeName[])
         return searchTree(root->right, nodeName);
 }
 
-void search(treeNameNode *root, char treeName[], char nodeName[], FILE *ofp)
+void search(treeNameNode *root, char treeName[], char nodeName[])
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     int found = searchTree(tree->theTree, nodeName);
     if (found == 0)
     {
         printf("\n%s not found in %s", nodeName, treeName);
-        fprintf(ofp, "\n%s not found in %s", nodeName, treeName);
     }
     else
     {
         printf("\n%d %s found in %s", found, nodeName, treeName);
-        fprintf(ofp, "\n%d %s found in %s", found, nodeName, treeName);
     }
+}
+
+int count_before(itemNode *root, char nodeName[])
+{
+    if (root == NULL)
+        return 0;
+    if (strcmp(root->name, nodeName) == 0)
+        return 0;
+    else if (strcmp(root->name, nodeName) < 0)
+        return 1 + count_before(root->left, nodeName);
+    else
+        return 1 + count_before(root->right, nodeName);
+}
+
+void item_before(treeNameNode *root, char treeName[], char nodeName[])
+{
+    treeNameNode *tree = searchNameNode(root, treeName);
+    int count = count_before(tree->theTree, nodeName);
+    printf("\nitem before deer: %d", count + 1);
+}
+
+// Returns a pointer to the node storing the minimum value in the tree
+// with the root, root. Will not work if called with an empty tree.
+itemNode *minVal(itemNode *root)
+{
+
+    // Root stores the minimal value.
+    if (root->left == NULL)
+        return root;
+
+    // The left subtree of the root stores the minimal value.
+    else
+        return minVal(root->left);
+}
+
+// Returns 1 iff node has a left child and no right child.
+int hasOnlyLeftChild(itemNode *node)
+{
+    return (node->left != NULL && node->right == NULL);
+}
+
+// Returns 1 iff node has a right child and no left child.
+int hasOnlyRightChild(itemNode *node)
+{
+    return (node->left == NULL && node->right != NULL);
+}
+
+// Returns 1 if node is a leaf node, 0 otherwise.
+int isLeaf(itemNode *node)
+{
+    return (node->left == NULL && node->right == NULL);
+}
+
+itemNode *parent(itemNode *root, itemNode *node)
+{
+    // Take care of NULL cases.
+    if (root == NULL || root == node)
+        return NULL;
+
+    // // The root is the direct parent of node.
+    if (root->left == node || root->right == node)
+        return root;
+
+    // // Look for node's parent in the left side of the tree.
+    if (strcmp(node->name, root->name) > 0)
+    {
+        return parent(root->left, node);
+    }
+
+    // // Look for node's parent in the right side of the tree.
+    else if (strcmp(node->name, root->name) < 0)
+        return parent(root->right, node);
+
+    return NULL; // Catch any other extraneous cases.
+}
+
+itemNode *findNode(itemNode *current_ptr, char nodeName[])
+{
+    // Check if there are nodes in the tree.
+    if (current_ptr != NULL)
+    {
+        // Found the value at the root.
+        if (strcmp(current_ptr->name, nodeName) == 0)
+        {
+            return current_ptr;
+        }
+
+        // Search to the left.
+        if (strcmp(nodeName, current_ptr->name) < 0)
+            return findNode(current_ptr->left, nodeName);
+
+        // Or...search to the right.
+        else
+            return findNode(current_ptr->right, nodeName);
+    }
+    else
+        return NULL; // No node found.
+}
+
+itemNode *delete_node(itemNode *root, char nodeName[])
+{
+    itemNode *delnode, *new_del_node, *save_node;
+    itemNode *par;
+    char save_val[MAXLEN];
+
+    delnode = findNode(root, nodeName); // Get a pointer to the node to delete.
+
+    par = parent(root, delnode); // Get the parent of this node.
+
+    // Take care of the case where the node to delete is a leaf node.
+    if (isLeaf(delnode))
+    { // case 1
+
+        // Deleting the only node in the tree.
+        if (par == NULL)
+        {
+            free(root); // free the memory for the node.
+            return NULL;
+        }
+
+        // Deletes the node if it's a left child.
+        if (strcmp(nodeName, par->name) > 0)
+        {
+            free(par->left); // Free the memory for the node.
+            par->left = NULL;
+        }
+
+        // Deletes the node if it's a right child.
+        else
+        {
+            free(par->right); // Free the memory for the node.
+            par->right = NULL;
+        }
+
+        return root; // Return the root of the new tree.
+    }
+
+    // Take care of the case where the node to be deleted only has a left
+    // child.
+    if (hasOnlyLeftChild(delnode))
+    {
+
+        // Deleting the root node of the tree.
+        if (par == NULL)
+        {
+            save_node = delnode->left;
+            free(delnode);    // Free the node to delete.
+            return save_node; // Return the new root node of the resulting tree.
+        }
+
+        // Deletes the node if it's a left child.
+        if (strcmp(nodeName, par->name) > 0)
+        {
+            save_node = par->left;       // Save the node to delete.
+            par->left = par->left->left; // Readjust the parent pointer.
+            free(save_node);             // Free the memory for the deleted node.
+        }
+
+        // Deletes the node if it's a right child.
+        else
+        {
+            save_node = par->right;        // Save the node to delete.
+            par->right = par->right->left; // Readjust the parent pointer.
+            free(save_node);               // Free the memory for the deleted node.
+        }
+
+        return root; // Return the root of the tree after the deletion.
+    }
+
+    // Takes care of the case where the deleted node only has a right child.
+    if (hasOnlyRightChild(delnode))
+    {
+
+        // Node to delete is the root node.
+        if (par == NULL)
+        {
+            save_node = delnode->right;
+            free(delnode);
+            return save_node;
+        }
+
+        // Delete's the node if it is a left child.
+        if (strcmp(nodeName, par->name) > 0)
+        {
+            save_node = par->left;
+            par->left = par->left->right;
+            free(save_node);
+        }
+
+        // Delete's the node if it is a right child.
+        else
+        {
+            save_node = par->right;
+            par->right = par->right->right;
+            free(save_node);
+        }
+        return root;
+    }
+    //if your code reaches hear it means delnode has two children
+    // Find the new physical node to delete.
+    new_del_node = minVal(delnode->right);
+    strcpy(save_val, new_del_node->name);
+    delete_node(root, save_val); // Now, delete the proper value.
+
+    // Restore the data to the original node to be deleted.
+    delnode->name = save_val;
+
+    return root;
+}
+
+void delete_query(treeNameNode *root, char treeName[], char nodeName[])
+{
+    treeNameNode *tree = searchNameNode(root, treeName);
+    tree->theTree = delete_node(tree->theTree, nodeName);
+    printf("\n%s deleted from %s", nodeName, treeName);
+}
+
+int count_all(itemNode *root)
+{
+    if (root == NULL)
+        return 0;
+    else
+        return root->count + count_all(root->left) + count_all(root->right);
+}
+
+void count_nodes(treeNameNode *root, char treeName[])
+{
+    treeNameNode *tree = searchNameNode(root, treeName);
+    int count = count_all(tree->theTree);
+    printf("\n%s count %d", treeName, count);
+}
+
+int calculate_right(itemNode *root)
+{
+    int right = 0;
+    while (root->right != NULL)
+    {
+        right++;
+        root = root->right;
+    }
+    if (root->left != NULL)
+    {
+        while (root->left != NULL)
+        {
+            right++;
+            root = root->left;
+        }
+    }
+    return right;
+}
+
+int calculate_left(itemNode *root)
+{
+    int left = 0;
+    while (root->left != NULL)
+    {
+        left++;
+        root = root->left;
+    }
+    if (root->right != NULL)
+    {
+        while (root->right != NULL)
+        {
+            left++;
+            root = root->right;
+        }
+    }
+    return left;
+}
+
+void height_balance(treeNameNode *root, char treeName[])
+{
+    treeNameNode *tree = searchNameNode(root, treeName);
+    int left;
+    int right;
+    int height;
+    if (tree->theTree->left == NULL)
+        left = -1;
+    if (tree->theTree->right == NULL)
+        right = -1;
+    if (tree->theTree->left != NULL)
+    {
+        left = calculate_left(tree->theTree->left);
+    }
+    if (tree->theTree->right != NULL)
+    {
+        right = calculate_right(tree->theTree->right);
+    }
+    height = abs(right - left);
+    printf("\n%s: left height %d, right height %d, difference %d, %s",
+           treeName, left, right, height, height == 0 ? "balanced" : "not balanced");
 }
 
 void queries(treeNameNode *root, FILE *inFile, FILE *ofp, int Q)
 {
-    char querie[MAXLEN];
+    char query[MAXLEN];
     char treeName[MAXLEN];
     char nodeName[MAXLEN];
     int count;
 
-    fscanf(inFile, "%s", querie);
+    for (int i = 0; i < Q; i++)
+    {
+        fscanf(inFile, "%s", query);
 
-    if (strcmp(querie, "search") == 0 || strcmp(querie, "item_before") == 0 || strcmp(querie, "delete") == 0)
-        fscanf(inFile, "%s %s", treeName, nodeName);
-    else if (strcmp(querie, "height_balance") == 0 || strcmp(querie, "count") == 0 || strcmp(querie, "delete_name") == 0)
-        fscanf(inFile, "%s", treeName);
-    else if (strcmp(querie, "reduce") == 0)
-        fscanf(inFile, "%s %s %d", treeName, nodeName, &count);
+        if (strcmp(query, "search") == 0 || strcmp(query, "item_before") == 0 || strcmp(query, "delete") == 0)
+            fscanf(inFile, "%s %s", treeName, nodeName);
+        else if (strcmp(query, "height_balance") == 0 || strcmp(query, "count") == 0 || strcmp(query, "delete_name") == 0)
+            fscanf(inFile, "%s", treeName);
+        else if (strcmp(query, "reduce") == 0)
+            fscanf(inFile, "%s %s %d", treeName, nodeName, &count);
 
-    search(root, treeName, nodeName, ofp);
+        if (strcmp(query, "search") == 0)
+            search(root, treeName, nodeName);
+        // if (strcmp(query, "item_before") == 0)
+        //     item_before(root, treeName, nodeName);
+        // if(strcmp(query, "height_balance") == 0)
+        //     height_balance(root, treeName);
+        // if (strcmp(query, "delete") == 0)
+        //     delete_query(root, treeName, nodeName);
+        // if (strcmp(query, "count") == 0)
+        //     count_nodes(root, treeName);
+    }
 }
 
 int main(void)
@@ -246,9 +547,10 @@ int main(void)
     atexit(report_mem_leak);
     int N, I, Q;
     FILE *inFile = fopen("in.txt", "r");
-    FILE *ofp;
-    ofp = fopen("out.txt", "w");
+    FILE *ofp = fopen("out.txt", "w");
+
     fscanf(inFile, "%d %d %d", &N, &I, &Q);
+
     treeNameNode *nameRoot = buildNameTree(inFile, N);
     populateTrees(inFile, nameRoot, I);
     displayInOrderNameTree(nameRoot, ofp);
@@ -256,7 +558,7 @@ int main(void)
 
     queries(nameRoot, inFile, ofp, Q);
 
-    freeAll(nameRoot);
+    // freeTree(nameRoot);
     fclose(inFile);
     fclose(ofp);
 }
