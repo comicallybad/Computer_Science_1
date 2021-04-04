@@ -1,3 +1,5 @@
+/* COP 3502C Assignment 4 This program is written by: John Seredick */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,6 +13,7 @@ typedef struct itemNode
     int count;
     struct itemNode *left, *right;
 } itemNode;
+
 typedef struct treeNameNode
 {
     char treeName[MAXLEN];
@@ -28,6 +31,7 @@ treeNameNode *createTreeNameNode(char *name)
     return nameNode;
 }
 
+//Create an item within the tree
 itemNode *createItemNode(char *name, int count)
 {
     itemNode *node = (itemNode *)malloc(sizeof(itemNode));
@@ -38,6 +42,7 @@ itemNode *createItemNode(char *name, int count)
     return node;
 }
 
+//Add new tree into root
 treeNameNode *insertNameNode(treeNameNode *root, treeNameNode *newNode)
 {
     if (root == NULL)
@@ -62,6 +67,7 @@ treeNameNode *insertNameNode(treeNameNode *root, treeNameNode *newNode)
     return root;
 }
 
+//Add new item into tree
 itemNode *insertItemNode(itemNode *treeRoot, itemNode *newNode)
 {
     if (treeRoot == NULL)
@@ -86,6 +92,7 @@ itemNode *insertItemNode(itemNode *treeRoot, itemNode *newNode)
     return treeRoot;
 }
 
+//From the input file, take all tree names and create a tree for each
 treeNameNode *buildNameTree(FILE *inFile, int N)
 {
     if (inFile == NULL)
@@ -102,7 +109,8 @@ treeNameNode *buildNameTree(FILE *inFile, int N)
     return nameRoot;
 }
 
-treeNameNode *searchNameNode(treeNameNode *root, char treeName[50])
+//Find a specific tree from treeName
+treeNameNode *searchNameNode(treeNameNode *root, char treeName[MAXLEN])
 {
     if (root == NULL)
         return NULL;
@@ -116,6 +124,7 @@ treeNameNode *searchNameNode(treeNameNode *root, char treeName[50])
     return nameNode;
 }
 
+//From the input file, fill the created trees with the nodes
 void populateTrees(FILE *inFile, treeNameNode *nameRoot, int I)
 {
     if (inFile == NULL)
@@ -135,6 +144,7 @@ void populateTrees(FILE *inFile, treeNameNode *nameRoot, int I)
     }
 }
 
+//Display the elements of a tree in order alphabetically
 void displayInOrderNameTree(treeNameNode *root, FILE *ofp)
 {
     if (root != NULL)
@@ -146,6 +156,7 @@ void displayInOrderNameTree(treeNameNode *root, FILE *ofp)
     }
 }
 
+//Traverses the itemNode sub tree
 void traverseSubTree(itemNode *root, FILE *ofp)
 {
     if (root != NULL)
@@ -157,6 +168,7 @@ void traverseSubTree(itemNode *root, FILE *ofp)
     }
 }
 
+//Traverses the tree and uses traverse subtree and prints it out
 void traverse_in_traverse(treeNameNode *root, FILE *ofp)
 {
     if (root != NULL)
@@ -169,6 +181,7 @@ void traverse_in_traverse(treeNameNode *root, FILE *ofp)
     }
 }
 
+//Free a specifc given node
 void freeNode(itemNode *root)
 {
     if (root != NULL)
@@ -179,6 +192,7 @@ void freeNode(itemNode *root)
     }
 }
 
+//Free specific tree
 void freeTree(treeNameNode *root)
 {
     if (root != NULL)
@@ -190,6 +204,7 @@ void freeTree(treeNameNode *root)
     }
 }
 
+//Counts how many elements are before ther given node
 int count_before(itemNode *root, char *nodeName)
 {
     if (root == NULL)
@@ -202,11 +217,13 @@ int count_before(itemNode *root, char *nodeName)
         return 1 + count_before(root->right, nodeName);
 }
 
-void item_before(treeNameNode *root, char *treeName, char *nodeName)
+//Finds the item before the given node
+void item_before(treeNameNode *root, char *treeName, char *nodeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     int count = count_before(tree->theTree, nodeName);
-    printf("\nitem before deer: %d", count + 1);
+    printf("\nitem before %s: %d", nodeName, count + 1);
+    fprintf(ofp, "\nitem before %s: %d", nodeName, count);
 }
 
 // Returns a pointer to the node storing the minimum value in the tree
@@ -264,6 +281,7 @@ itemNode *parent(itemNode *root, itemNode *node)
     return NULL; // Catch any other extraneous cases.
 }
 
+//Finds a node from a node name and given tree
 itemNode *findNode(itemNode *current_ptr, char *nodeName)
 {
     // Check if there are nodes in the tree.
@@ -287,6 +305,7 @@ itemNode *findNode(itemNode *current_ptr, char *nodeName)
         return NULL; // No node found.
 }
 
+//Delete a node from a node name
 itemNode *delete_node(itemNode *root, char *nodeName)
 {
     itemNode *delnode, *new_del_node, *save_node;
@@ -394,17 +413,21 @@ itemNode *delete_node(itemNode *root, char *nodeName)
 
     // Restore the data to the original node to be deleted.
     strcpy(delnode->name, save_val);
+    delnode->count = 0;
 
     return root;
 }
 
-void delete_query(treeNameNode *root, char *treeName, char *nodeName)
+//Deletes a given node from a tree and node name
+void delete_query(treeNameNode *root, char *treeName, char *nodeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     tree->theTree = delete_node(tree->theTree, nodeName);
     printf("\n%s deleted from %s", nodeName, treeName);
+    fprintf(ofp, "\n%s deleted from %s", nodeName, treeName);
 }
 
+//Adds up total of all nodes
 int count_all(itemNode *root)
 {
     if (root == NULL)
@@ -413,13 +436,16 @@ int count_all(itemNode *root)
         return root->count + count_all(root->left) + count_all(root->right);
 }
 
-void count_nodes(treeNameNode *root, char *treeName)
+//Count the number of nodes in a tree
+void count_nodes(treeNameNode *root, char *treeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     int count = count_all(tree->theTree);
     printf("\n%s count %d", treeName, count);
+    fprintf(ofp, "\n%s count %d", treeName, count);
 }
 
+//Used for height_balance to find the right height
 int calculate_right(itemNode *root)
 {
     int right = 0;
@@ -439,6 +465,7 @@ int calculate_right(itemNode *root)
     return right;
 }
 
+//Used for height_balance to find the left height
 int calculate_left(itemNode *root)
 {
     int left = 0;
@@ -458,7 +485,8 @@ int calculate_left(itemNode *root)
     return left;
 }
 
-void height_balance(treeNameNode *root, char *treeName)
+//Determine if a tree is balanced or not
+void height_balance(treeNameNode *root, char *treeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     int left;
@@ -479,8 +507,11 @@ void height_balance(treeNameNode *root, char *treeName)
     height = abs(right - left);
     printf("\n%s: left height %d, right height %d, difference %d, %s",
            treeName, left, right, height, height == 0 ? "balanced" : "not balanced");
+    fprintf(ofp, "\n%s: left height %d, right height %d, difference %d, %s",
+            treeName, left, right, height, height == 0 ? "balanced" : "not balanced");
 }
 
+//Searches tree for a given node and returns the count of that node
 int searchTree(itemNode *root, char *nodeName)
 {
     if (root == NULL)
@@ -493,22 +524,33 @@ int searchTree(itemNode *root, char *nodeName)
         return searchTree(root->right, nodeName);
 }
 
-void search(treeNameNode *root, char *treeName, char *nodeName)
+//Finds the tree to search for, then calls search tree to search for the specific node
+void search(treeNameNode *root, char *treeName, char *nodeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     if (tree == NULL)
+    {
         printf("\n%s does not exist", treeName);
+        fprintf(ofp, "\n%s does not exist", treeName);
+    }
     else
     {
         int count = searchTree(tree->theTree, nodeName);
         if (count == 0)
+        {
             printf("\n%s not found in %s", nodeName, treeName);
+            fprintf(ofp, "\n%s not found in %s", nodeName, treeName);
+        }
         else
+        {
             printf("\n%d %s found in %s", count, nodeName, treeName);
+            fprintf(ofp, "\n%d %s found in %s", count, nodeName, treeName);
+        }
     }
 }
 
-void reduce(treeNameNode *root, char *treeName, char *nodeName, int count)
+//Finds an element from a given tree and node and reduces it's count. If it is <=0, delete the node
+void reduce(treeNameNode *root, char *treeName, char *nodeName, int count, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     if (tree != NULL)
@@ -516,19 +558,23 @@ void reduce(treeNameNode *root, char *treeName, char *nodeName, int count)
         itemNode *temp = findNode(tree->theTree, nodeName);
         temp->count -= count;
         printf("\n%s reduced", nodeName);
+        fprintf(ofp, "\n%s reduced", nodeName);
         if (temp->count <= 0)
             delete_node(tree->theTree, nodeName);
     }
 }
 
-void delete_name(treeNameNode *root, char *treeName)
+//Delete an entire tree
+void delete_name(treeNameNode *root, char *treeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
     tree = NULL;
     freeTree(tree);
     printf("\n%s deleted", treeName);
+    fprintf(ofp, "\n%s deleted", treeName);
 }
 
+//This function will handle the queries
 void queries(treeNameNode *root, FILE *inFile, FILE *ofp, int Q)
 {
     for (int i = 0; i < Q; i++)
@@ -538,8 +584,10 @@ void queries(treeNameNode *root, FILE *inFile, FILE *ofp, int Q)
         char nodeName[MAXLEN];
         int count;
 
+        //Scan for query
         fscanf(inFile, "%s", query);
 
+        //Based off the query, determine what other inputs are needed
         if (strcmp(query, "search") == 0 || strcmp(query, "item_before") == 0 || strcmp(query, "delete") == 0)
             fscanf(inFile, "%s %s", treeName, nodeName);
         else if (strcmp(query, "height_balance") == 0 || strcmp(query, "count") == 0 || strcmp(query, "delete_name") == 0)
@@ -547,23 +595,25 @@ void queries(treeNameNode *root, FILE *inFile, FILE *ofp, int Q)
         else if (strcmp(query, "reduce") == 0)
             fscanf(inFile, "%s %s %d", treeName, nodeName, &count);
 
+        //Based off of the query, do the action the query asks for
         if (strcmp(query, "search") == 0)
-            search(root, treeName, nodeName);
+            search(root, treeName, nodeName, ofp);
         else if (strcmp(query, "item_before") == 0)
-            item_before(root, treeName, nodeName);
+            item_before(root, treeName, nodeName, ofp);
         else if (strcmp(query, "height_balance") == 0)
-            height_balance(root, treeName);
+            height_balance(root, treeName, ofp);
         else if (strcmp(query, "delete") == 0)
-            delete_query(root, treeName, nodeName);
+            delete_query(root, treeName, nodeName, ofp);
         else if (strcmp(query, "count") == 0)
-            count_nodes(root, treeName);
+            count_nodes(root, treeName, ofp);
         else if (strcmp(query, "reduce") == 0)
-            reduce(root, treeName, nodeName, count);
+            reduce(root, treeName, nodeName, count, ofp);
         else if (strcmp(query, "delete_name") == 0)
-            delete_name(root, treeName);
+            delete_name(root, treeName, ofp);
     }
 }
 
+//Main funciton will init nameRoot and call necessary functions, then free memory and close files.
 int main(void)
 {
     atexit(report_mem_leak);
@@ -573,14 +623,14 @@ int main(void)
 
     fscanf(inFile, "%d %d %d", &N, &I, &Q);
 
-    treeNameNode *nameRoot = buildNameTree(inFile, N);
-    populateTrees(inFile, nameRoot, I);
-    displayInOrderNameTree(nameRoot, ofp);
-    traverse_in_traverse(nameRoot, ofp);
+    treeNameNode *root = buildNameTree(inFile, N);
+    populateTrees(inFile, root, I);
+    displayInOrderNameTree(root, ofp);
+    traverse_in_traverse(root, ofp);
 
-    queries(nameRoot, inFile, ofp, Q);
+    queries(root, inFile, ofp, Q);
 
-    freeTree(nameRoot);
+    freeTree(root);
     fclose(inFile);
     fclose(ofp);
 }
