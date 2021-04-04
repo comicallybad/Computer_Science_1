@@ -12,7 +12,9 @@ fruit mango 100
 animal alligator 50
 animal tiger 3
 animal lion 3
-fish swordfish 10animal deer 5animal cow 15
+fish swordfish 10
+animal deer 5
+animal cow 15
 fish garfish 5
 fish catfish 55
 fish salmon 40
@@ -40,7 +42,8 @@ height_balance animal
 height_balance bird
 height_balance fish
 search flower rose
-count animalcount fruit
+count animal
+count fruit
 delete animal cat
 search animal cat
 count animal
