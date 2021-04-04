@@ -210,8 +210,8 @@ int count_before(itemNode *root, char *nodeName)
     if (root == NULL)
         return 0;
     if (strcmp(root->name, nodeName) == 0)
-        return 0;
-    else if (strcmp(root->name, nodeName) < 0)
+        return 1;
+    else if (strcmp(root->name, nodeName) > 0)
         return 1 + count_before(root->left, nodeName);
     else
         return 1 + count_before(root->right, nodeName);
@@ -223,14 +223,13 @@ void item_before(treeNameNode *root, char *treeName, char *nodeName, FILE *ofp)
     treeNameNode *tree = searchNameNode(root, treeName);
     int count = count_before(tree->theTree, nodeName);
     printf("\nitem before %s: %d", nodeName, count + 1);
-    fprintf(ofp, "\nitem before %s: %d", nodeName, count);
+    fprintf(ofp, "\nitem before %s: %d", nodeName, count + 1);
 }
 
 // Returns a pointer to the node storing the minimum value in the tree
 // with the root, root. Will not work if called with an empty tree.
 itemNode *minVal(itemNode *root)
 {
-
     // Root stores the minimal value.
     if (root->left == NULL)
         return root;
@@ -313,7 +312,7 @@ itemNode *delete_node(itemNode *root, char *nodeName)
     char save_val[MAXLEN];
 
     delnode = findNode(root, nodeName); // Get a pointer to the node to delete.
-
+    // strcpy(delnode->name, "");
     par = parent(root, delnode); // Get the parent of this node.
 
     // Take care of the case where the node to delete is a leaf node.
@@ -340,7 +339,7 @@ itemNode *delete_node(itemNode *root, char *nodeName)
             free(par->right); // Free the memory for the node.
             par->right = NULL;
         }
-
+        strcpy(delnode->name, "");
         return root; // Return the root of the new tree.
     }
 
@@ -372,7 +371,7 @@ itemNode *delete_node(itemNode *root, char *nodeName)
             par->right = par->right->left; // Readjust the parent pointer.
             free(save_node);               // Free the memory for the deleted node.
         }
-
+        strcpy(delnode->name, "");
         return root; // Return the root of the tree after the deletion.
     }
 
@@ -412,7 +411,7 @@ itemNode *delete_node(itemNode *root, char *nodeName)
     delete_node(root, save_val); // Now, delete the proper value.
 
     // Restore the data to the original node to be deleted.
-    strcpy(delnode->name, save_val);
+    strcpy(delnode->name, "");
     delnode->count = 0;
 
     return root;
@@ -422,9 +421,17 @@ itemNode *delete_node(itemNode *root, char *nodeName)
 void delete_query(treeNameNode *root, char *treeName, char *nodeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
-    tree->theTree = delete_node(tree->theTree, nodeName);
-    printf("\n%s deleted from %s", nodeName, treeName);
-    fprintf(ofp, "\n%s deleted from %s", nodeName, treeName);
+    if (tree == NULL)
+    {
+        printf("\n%s does not exist", treeName);
+        fprintf(ofp, "\n%s does not exist", treeName);
+    }
+    else
+    {
+        tree->theTree = delete_node(tree->theTree, nodeName);
+        printf("\n%s deleted from %s", nodeName, treeName);
+        fprintf(ofp, "\n%s deleted from %s", nodeName, treeName);
+    }
 }
 
 //Adds up total of all nodes
@@ -440,9 +447,17 @@ int count_all(itemNode *root)
 void count_nodes(treeNameNode *root, char *treeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
-    int count = count_all(tree->theTree);
-    printf("\n%s count %d", treeName, count);
-    fprintf(ofp, "\n%s count %d", treeName, count);
+    if (tree == NULL)
+    {
+        printf("\n%s does not exist", treeName);
+        fprintf(ofp, "\n%s does not exist", treeName);
+    }
+    else
+    {
+        int count = count_all(tree->theTree);
+        printf("\n%s count %d", treeName, count);
+        fprintf(ofp, "\n%s count %d", treeName, count);
+    }
 }
 
 //Used for height_balance to find the right height
@@ -568,6 +583,7 @@ void reduce(treeNameNode *root, char *treeName, char *nodeName, int count, FILE 
 void delete_name(treeNameNode *root, char *treeName, FILE *ofp)
 {
     treeNameNode *tree = searchNameNode(root, treeName);
+    strcpy(tree->treeName, "");
     tree = NULL;
     freeTree(tree);
     printf("\n%s deleted", treeName);
@@ -629,6 +645,7 @@ int main(void)
     traverse_in_traverse(root, ofp);
 
     queries(root, inFile, ofp, Q);
+    printf("\n");
 
     freeTree(root);
     fclose(inFile);
